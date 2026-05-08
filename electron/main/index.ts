@@ -1,10 +1,9 @@
-import { app, BrowserWindow, shell, ipcMain,screen } from 'electron'
-import { createRequire } from 'node:module'
+import { app, BrowserWindow } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
-import os from 'node:os'
+import { uIOhook } from 'uiohook-napi'
+import { loadConfig, validateConfig, setupConfigIPC } from './config'
 
-const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 // The built directory structure
@@ -27,10 +26,7 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL
   ? path.join(process.env.APP_ROOT, 'public')
   : RENDERER_DIST
 
-// Disable GPU Acceleration for Windows 7
-if (os.release().startsWith('6.1') || process.platform == 'darwin') app.disableHardwareAcceleration()
 
-// Set application name for Windows 10+ notifications
 if (process.platform === 'win32') app.setAppUserModelId(app.getName())
 
 if (!app.requestSingleInstanceLock()) {
@@ -46,47 +42,63 @@ async function createWindow() {
   win = new BrowserWindow({
     title: 'Main window',
     icon: path.join(process.env.VITE_PUBLIC, 'favicon.ico'),
-    frame: false,
+    // frame: false,
     transparent: true,
-    // skipTaskbar: true,
-    // 置顶（始终在最上层）
-    alwaysOnTop: true,
-    fullscreenable: false,
-    // 禁止调整大小
-    resizable: false,
+    // alwaysOnTop: true,
+    // fullscreenable: false,
+    // resizable: false,
     webPreferences: {
       preload,
+      webSecurity: false,
     },
   })
-  win.setIgnoreMouseEvents(true, { forward: true });
-  win.setAlwaysOnTop(true, 'screen-saver');
+  // win.setIgnoreMouseEvents(true, { forward: true });
+  // win.setAlwaysOnTop(true, 'screen-saver');
   win.setVisibleOnAllWorkspaces(true);
-  if (VITE_DEV_SERVER_URL) { // #298
+
+  if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL)
-    // Open devTool if the app is not packaged
-    // win.webContents.openDevTools()
+    win.webContents.openDevTools()
   } else {
     win.loadFile(indexHtml)
   }
-
-  // Test actively push message to the Electron-Renderer
-  win.webContents.on('did-finish-load', () => {
-    win?.webContents.send('main-process-message', new Date().toLocaleString())
-  })
 }
 
-app.whenReady().then(()=>{
-  createWindow()
+// Global hotkey listening
+const F8_KEYCODE = 66
+let isF8Pressed = false
+
+uIOhook.on('keydown', (event) => {
+  if (event.keycode === F8_KEYCODE && !isF8Pressed) {
+    isF8Pressed = true
+    win?.webContents.send('start-recording')
+  }
+})
+
+uIOhook.on('keyup', (event) => {
+  if (event.keycode === F8_KEYCODE && isF8Pressed) {
+    isF8Pressed = false
+    win?.webContents.send('stop-recording')
+  }
+})
+
+app.whenReady().then(() => {
+  const config = loadConfig()
+  if (validateConfig(config)) {
+    setupConfigIPC(config)
+    createWindow()
+    uIOhook.start()
+  }
 })
 
 app.on('window-all-closed', () => {
   win = null
+  uIOhook.stop()
   app.quit()
 })
 
 app.on('second-instance', () => {
   if (win) {
-    // Focus on the main window if the user tried to open another
     if (win.isMinimized()) win.restore()
     win.focus()
   }
@@ -100,4 +112,3 @@ app.on('activate', () => {
     createWindow()
   }
 })
-
