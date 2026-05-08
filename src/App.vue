@@ -1,28 +1,24 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import type { AppConfig } from "../type.ts";
-import {OpenAI,Uploadable} from "openai";
+import {OpenAI} from "openai";
 import { init as initTTS, tts } from "./tts";
+import { init as initLLM, chat as llmChat } from "./llm";
 
 const mediaRecorder = ref<MediaRecorder | null>(null)
 const audioChunks = ref<Blob[]>([])
 const isRecording = ref(false)
 let sttClient:OpenAI|null = null
-let llmClient:OpenAI|null = null
 const modelConfig=ref<AppConfig|null>(null)
 
 onMounted(async () => {
   window.ipcRenderer.invoke('get-config').then((config: AppConfig) => {
     initTTS(config.tts);
+    initLLM(config.llm, tts);
     sttClient = new OpenAI({
       dangerouslyAllowBrowser: true,
       apiKey: config.stt.key,
       baseURL: config.stt.url
-    })
-    llmClient = new OpenAI({
-      dangerouslyAllowBrowser: true,
-      apiKey: config.llm.key,
-      baseURL: config.llm.url,
     })
     modelConfig.value = config
   }).catch((error) => {
@@ -51,7 +47,7 @@ onMounted(async () => {
           file: file,
           model: modelConfig.value!.stt.model
         }).then((response) => {
-          console.log('Renderer: Transcription API Result:', response.text)
+          llmChat(response.text)
         }).catch((uploadError) => {
           console.error('Renderer: Upload failed:', uploadError)
         })
@@ -75,13 +71,10 @@ onMounted(async () => {
   }
 })
 
-async function handleMouseDown() {
-  tts("你好，今天天气怎么样？");
-}
 </script>
 
 <template>
-  <div @mousedown="handleMouseDown" class="flex-center" :style="{ backgroundColor: isRecording ? 'red' : 'green', height: '100px', width: '100px' }">
+  <div class="flex-center" :style="{ backgroundColor: isRecording ? 'red' : 'green', height: '100px', width: '100px' }">
   </div>
 </template>
 

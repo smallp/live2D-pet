@@ -33,6 +33,7 @@ export async function tts(text: string) {
     if (audioCtx.state === 'suspended') {
         await audioCtx.resume();
     }
+    console.log(`tts:${text}`);
 
     try {
         const response = await ttsClient.audio.speech.create({
