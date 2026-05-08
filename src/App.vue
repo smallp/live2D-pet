@@ -2,22 +2,18 @@
 import { onMounted, ref } from 'vue'
 import type { AppConfig } from "../type.ts";
 import {OpenAI,Uploadable} from "openai";
+import { init as initTTS, tts } from "./tts";
 
 const mediaRecorder = ref<MediaRecorder | null>(null)
 const audioChunks = ref<Blob[]>([])
 const isRecording = ref(false)
-let ttsClient:OpenAI|null = null
 let sttClient:OpenAI|null = null
 let llmClient:OpenAI|null = null
 const modelConfig=ref<AppConfig|null>(null)
 
 onMounted(async () => {
   window.ipcRenderer.invoke('get-config').then((config: AppConfig) => {
-    ttsClient = new OpenAI({
-      dangerouslyAllowBrowser: true,
-      apiKey: config.tts.key,
-      baseURL: config.tts.url
-    })
+    initTTS(config.tts);
     sttClient = new OpenAI({
       dangerouslyAllowBrowser: true,
       apiKey: config.stt.key,
@@ -78,10 +74,14 @@ onMounted(async () => {
     console.error('Failed to access microphone:', error)
   }
 })
+
+async function handleMouseDown() {
+  tts("你好，今天天气怎么样？");
+}
 </script>
 
 <template>
-  <div class="flex-center" :style="{ backgroundColor: isRecording ? 'red' : 'green', height: '100px', width: '100px' }">
+  <div @mousedown="handleMouseDown" class="flex-center" :style="{ backgroundColor: isRecording ? 'red' : 'green', height: '100px', width: '100px' }">
   </div>
 </template>
 

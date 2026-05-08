@@ -3,9 +3,12 @@ export interface ServiceConfig {
     key: string
     model: string
 }
-
+export interface TTSConfig extends ServiceConfig {
+    voice: string
+    sampleRate: number
+}
 export interface AppConfig {
-    tts: ServiceConfig
+    tts: TTSConfig
     stt: ServiceConfig
     llm: ServiceConfig
 }

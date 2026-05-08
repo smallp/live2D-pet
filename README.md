@@ -1,79 +1,73 @@
-# electron-vite-vue
+# Live2D Desktop Pet (Electron + Vue)
 
-🥳 Really simple `Electron` + `Vue` + `Vite` boilerplate.
+这是一个基于 Electron、Vue 3 和 Vite 开发的桌面宠物应用，集成了大模型（LLM）、语音识别（STT）和语音合成（TTS）功能。
 
-<!-- [![awesome-vite](https://awesome.re/mentioned-badge.svg)](https://github.com/vitejs/awesome-vite) -->
-<!-- [![Netlify Status](https://api.netlify.com/api/v1/badges/ae3863e3-1aec-4eb1-8f9f-1890af56929d/deploy-status)](https://app.netlify.com/sites/electron-vite/deploys) -->
-<!-- [![GitHub license](https://img.shields.io/github/license/caoxiemeihao/electron-vite-vue)](https://github.com/electron-vite/electron-vite-vue/blob/main/LICENSE) -->
-<!-- [![GitHub stars](https://img.shields.io/github/stars/caoxiemeihao/electron-vite-vue?color=fa6470)](https://github.com/electron-vite/electron-vite-vue) -->
-<!-- [![GitHub forks](https://img.shields.io/github/forks/caoxiemeihao/electron-vite-vue)](https://github.com/electron-vite/electron-vite-vue) -->
-[![GitHub Build](https://github.com/electron-vite/electron-vite-vue/actions/workflows/build.yml/badge.svg)](https://github.com/electron-vite/electron-vite-vue/actions/workflows/build.yml)
-[![GitHub Discord](https://img.shields.io/badge/chat-discord-blue?logo=discord)](https://discord.gg/sRqjYpEAUK)
+## 功能特性
 
-## Features
+- **语音交互**：按下全局快捷键（F8）即可开始录音，松开结束录音并进行语音转文字（STT）。
+- **智能回答**：集成 LLM 大模型接口，可实现智能对话。
+- **语音播放**：集成 TTS 语音合成功能，支持 PCM 流式音频播放。
+- **透明窗口**：支持桌面透明窗口显示，适合作为桌面宠物挂件。
+- **全局热键**：使用 `uiohook-napi` 实现系统级全局热键监听（默认 F8）。
 
-📦 Out of the box  
-🎯 Based on the official [template-vue-ts](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-vue-ts), less invasive  
-🌱 Extensible, really simple directory structure  
-💪 Support using Node.js API in Electron-Renderer  
-🔩 Support C/C++ native addons  
-🖥 It's easy to implement multiple windows  
+## 技术栈
 
-## Quick Setup
+- **Frontend**: Vue 3, Vite, TypeScript
+- **Runtime**: Electron
+- **Services**: OpenAI API 兼容接口 (用于 LLM, STT, TTS)
+- **Native Hooks**: `uiohook-napi` (全局热键)
 
-```sh
-# clone the project
-git clone https://github.com/electron-vite/electron-vite-vue.git
+## 快速开始
 
-# enter the project directory
-cd electron-vite-vue
+### 1. 安装依赖
 
-# install dependency
+```bash
 npm install
+```
 
-# develop
+### 2. 配置文件
+
+应用首次启动会在用户目录下创建配置文件 `~/.pet.settings.json`。你需要填入相应的 API 密钥和地址：
+
+```json
+{
+  "tts": {
+    "url": "您的 TTS API 地址",
+    "key": "您的 API Key",
+    "model": "tts-1",
+    "voice": "alloy",
+    "sampleRate": 24000
+  },
+  "stt": {
+    "url": "您的 STT API 地址",
+    "key": "您的 API Key",
+    "model": "whisper-1"
+  },
+  "llm": {
+    "url": "您的 LLM API 地址",
+    "key": "您的 API Key",
+    "model": "gpt-3.5-turbo"
+  }
+}
+```
+
+### 3. 开发模式运行
+
+```bash
 npm run dev
 ```
 
-## Debug
+### 4. 构建应用
 
-![electron-vite-react-debug.gif](https://github.com/electron-vite/electron-vite-react/blob/main/electron-vite-react-debug.gif?raw=true)
-
-## Directory
-
-```diff
-+ ├─┬ electron
-+ │ ├─┬ main
-+ │ │ └── index.ts    entry of Electron-Main
-+ │ └─┬ preload
-+ │   └── index.ts    entry of Preload-Scripts
-  ├─┬ src
-  │ └── main.ts       entry of Electron-Renderer
-  ├── index.html
-  ├── package.json
-  └── vite.config.ts
+```bash
+npm run build
 ```
 
-<!--
-## Be aware
+## 快捷键说明
 
-🚨 By default, this template integrates Node.js in the Renderer process. If you don't need it, you just remove the option below. [Because it will modify the default config of Vite](https://github.com/electron-vite/vite-plugin-electron-renderer#config-presets-opinionated).
+- **F8 (按住)**：开始录音。
+- **F8 (松开)**：停止录音并触发后续流程（STT -> LLM -> TTS）。
 
-```diff
-# vite.config.ts
+## 许可证
 
-export default {
-  plugins: [
--   // Use Node.js API in the Renderer-process
--   renderer({
--     nodeIntegration: true,
--   }),
-  ],
-}
-```
--->
-
-## FAQ
-
-- [C/C++ addons, Node.js modules - Pre-Bundling](https://github.com/electron-vite/vite-plugin-electron-renderer#dependency-pre-bundling)
-- [dependencies vs devDependencies](https://github.com/electron-vite/vite-plugin-electron-renderer#dependencies-vs-devdependencies)
+MIT

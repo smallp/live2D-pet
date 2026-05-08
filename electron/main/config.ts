@@ -7,9 +7,9 @@ import type { AppConfig } from "../../type.ts";
 const CONFIG_PATH = path.join(os.homedir(), '.pet.settings.json')
 
 const DEFAULT_CONFIG: AppConfig = {
-  tts: { url: '', key: '' },
-  stt: { url: '', key: '' },
-  llm: { url: '', key: '' }
+  tts: { url: '', key: '', model: '', voice: '', sampleRate: 24000 },
+  stt: { url: '', key: '', model: '' },
+  llm: { url: '', key: '', model: '' }
 }
 
 export function loadConfig(): AppConfig {
