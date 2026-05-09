@@ -22,6 +22,7 @@ export async function chat(text: string) {
         return;
     }
 
+    console.log(text)
     const messages: any[] = [
         { role: "system", content: "你是一个可爱的AI语音宠物，叫小七，你会称呼用户为‘主人’。用户是语音输入，可能会有错误，你需要尝试理解用户的意图并修正输入的内容，比如用户说“你号“实际上是在说“你好“。你的回复需要简洁，不能有表情、特殊符号，回复内容需要适合用TTS读出来。" },
         { role: "user", content: text }
@@ -52,6 +53,11 @@ export async function chat(text: string) {
 
                 console.log(`Calling tool: ${functionName}`, functionArgs);
                 const functionResponse = await functionToCall(functionArgs);
+                if (!functionResponse) {
+                    await ttsCallback!(((functionToCall as any).desc ? (functionToCall as any).desc : functionName) + `工具调用失败了呢，主人，你检查一下环境是否支持哦！`)
+                    return
+                }
+                console.log(`工具调用完成: ${functionName}`);
 
                 messages.push({
                     tool_call_id: toolCall.id,

@@ -4,12 +4,18 @@ import type { AppConfig } from "../type.ts";
 import {OpenAI} from "openai";
 import { init as initTTS, tts } from "./tts";
 import { init as initLLM, chat as llmChat } from "./llm";
+import { webFunc } from "./tools/web";
 
 const mediaRecorder = ref<MediaRecorder | null>(null)
 const audioChunks = ref<Blob[]>([])
 const isRecording = ref(false)
 let sttClient:OpenAI|null = null
 const modelConfig=ref<AppConfig|null>(null)
+
+const handleTestClick = async () => {
+  // const result = await webFunc.openUrl('https://www.zhihu.com/hot')
+  // console.log('webFunc.openUrl result:', result)
+}
 
 onMounted(async () => {
   window.ipcRenderer.invoke('get-config').then((config: AppConfig) => {
@@ -74,7 +80,10 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex-center" :style="{ backgroundColor: isRecording ? 'red' : 'green', height: '100px', width: '100px' }">
+  <div class="flex-center"
+    :style="{ backgroundColor: isRecording ? 'red' : 'green', height: '100px', width: '100px' }"
+    @click="handleTestClick"
+  >
   </div>
 </template>
 

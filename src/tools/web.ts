@@ -1,5 +1,9 @@
-async function openUrl(url: string) {
-    return ""
+async function openUrl(param: { url: string }) {
+    const result = await (window as any).ipcRenderer.invoke('create-task', {
+        task: 'featchUrl',
+        data: param
+    })
+    return result
 }
 
 export const webDef = [
@@ -16,8 +20,8 @@ export const webDef = [
                 required: ["url"],
             },
         },
-    }
+    },
 ]
 export const webFunc = {
-    openUrl
+    openUrl,
 }

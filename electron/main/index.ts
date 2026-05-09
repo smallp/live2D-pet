@@ -1,8 +1,12 @@
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, ipcMain } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
+import { EventEmitter } from 'node:events'
 import { uIOhook } from 'uiohook-napi'
 import { loadConfig, validateConfig, setupConfigIPC } from './config'
+import { initWs, createTask } from './ws'
+
+const wsEvents = new EventEmitter()
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -86,6 +90,19 @@ app.whenReady().then(() => {
   const config = loadConfig()
   if (validateConfig(config)) {
     setupConfigIPC(config)
+    initWs(wsEvents)
+
+    ipcMain.handle('create-task', async (_, taskData) => {
+      const taskId = createTask(taskData)
+      if (!taskId) return null
+
+      return new Promise((resolve) => {
+        wsEvents.once(taskId, (result) => {
+          resolve(result)
+        })
+      })
+    })
+
     createWindow()
     uIOhook.start()
   }
