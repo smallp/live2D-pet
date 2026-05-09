@@ -3,6 +3,7 @@ async function openUrl(param: { url: string }) {
         task: 'featchUrl',
         data: param
     })
+    if (!result) throw new Error("请求网页失败，请检查环境是否正常哦！");
     return result
 }
 

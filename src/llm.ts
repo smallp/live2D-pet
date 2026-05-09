@@ -51,20 +51,21 @@ export async function chat(text: string) {
                 }
                 const functionArgs = JSON.parse(toolCall.function.arguments);
 
-                console.log(`Calling tool: ${functionName}`, functionArgs);
-                const functionResponse = await functionToCall(functionArgs);
-                if (!functionResponse) {
-                    await ttsCallback!(((functionToCall as any).desc ? (functionToCall as any).desc : functionName) + `工具调用失败了呢，主人，你检查一下环境是否支持哦！`)
+                try {
+                    console.log(`Calling tool: ${functionName}`, functionArgs);
+                    const functionResponse = await functionToCall(functionArgs);
+                    console.log(`工具调用完成: ${functionName}`);
+
+                    messages.push({
+                        tool_call_id: toolCall.id,
+                        role: "tool",
+                        name: functionName,
+                        content: JSON.stringify(functionResponse),
+                    });
+                } catch (error) {
+                    await ttsCallback!(`主人，工具调用失败了呢，错误信息是 ${(error as Error).message}`);
                     return
                 }
-                console.log(`工具调用完成: ${functionName}`);
-
-                messages.push({
-                    tool_call_id: toolCall.id,
-                    role: "tool",
-                    name: functionName,
-                    content: JSON.stringify(functionResponse),
-                });
             }
 
             response = await llmClient.chat.completions.create({

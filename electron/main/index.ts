@@ -1,6 +1,8 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, ipcMain, dialog } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
+import fs from 'node:fs'
+import os from 'node:os'
 import { EventEmitter } from 'node:events'
 import { uIOhook } from 'uiohook-napi'
 import { loadConfig, validateConfig, setupConfigIPC } from './config'
@@ -101,6 +103,67 @@ app.whenReady().then(() => {
           resolve(result)
         })
       })
+    })
+
+    ipcMain.handle('write-file', async (_, { path: filePath, content }) => {
+      if (!win) return { success: false, message: '窗口不存在' }
+
+      // 强制将路径限制在用户根目录下
+      let absolutePath: string
+      if (filePath.startsWith('~/')) {
+        absolutePath = path.join(os.homedir(), filePath.slice(2))
+      } else {
+        // 无论传入什么，都取其 basename 并拼接到用户家目录，或者简单处理
+        // 根据要求：在前面添加 ~/，意味着我们要引导路径到用户家目录
+        const relativePath = filePath.replace(/^([a-zA-Z]:)?(\\|\/)+/, '') // 移除开头的盘符或斜杠
+        absolutePath = path.join(os.homedir(), relativePath)
+      }
+
+      const { response } = await dialog.showMessageBox(win, {
+        type: 'question',
+        buttons: ['确定', '取消'],
+        defaultId: 0,
+        title: '文件写入确认',
+        message: `是否允许写入文件？\n路径: ${absolutePath}`,
+        detail: '写入操作将覆盖原有文件内容（如果文件已存在）。'
+      })
+
+      if (response === 0) {
+        try {
+          const dir = path.dirname(absolutePath)
+          if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true })
+          }
+          fs.writeFileSync(absolutePath, content, 'utf-8')
+          return { success: true, message: '写入成功', path: absolutePath }
+        } catch (error: any) {
+          return { success: false, message: `写入失败: ${error.message}` }
+        }
+      } else {
+        return { success: false, message: '用户取消了操作' }
+      }
+    })
+
+    ipcMain.handle('read-file', async (_, { path: filePath }) => {
+      // 强制将路径限制在用户根目录下
+      let absolutePath: string
+      if (filePath.startsWith('~/')) {
+        absolutePath = path.join(os.homedir(), filePath.slice(2))
+      } else {
+        const relativePath = filePath.replace(/^([a-zA-Z]:)?(\\|\/)+/, '')
+        absolutePath = path.join(os.homedir(), relativePath)
+      }
+
+      try {
+        if (fs.existsSync(absolutePath)) {
+          const content = fs.readFileSync(absolutePath, 'utf-8')
+          return { success: true, content }
+        } else {
+          return { success: false, message: '文件不存在' }
+        }
+      } catch (error: any) {
+        return { success: false, message: `读取失败: ${error.message}` }
+      }
     })
 
     createWindow()

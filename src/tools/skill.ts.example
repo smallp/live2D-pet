@@ -1,0 +1,20 @@
+async function getHotTopics() {
+    return '访问 https://www.zhihu.com/hot 获取热搜信息，然后整理输出到文件 hot.md 中。需要带上标题、大概内容、链接信息。'
+}
+
+export const skillDef = [
+    {
+        type: "function",
+        function: {
+            name: "getHotTopics",
+            description: "获取热搜信息",
+            parameters: {
+                type: "object",
+                properties: {},
+            },
+        },
+    }
+]
+export const skillFunc = {
+    getHotTopics,
+}
