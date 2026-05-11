@@ -1,6 +1,9 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { v4 as uuidv4 } from 'uuid';
 import { EventEmitter } from 'events';
+import fs from 'node:fs'
+import path from 'node:path'
+import os from 'node:os'
 
 interface Task {
     task: string;
@@ -24,6 +27,7 @@ export function initWs(eventEmitter: EventEmitter) {
             try {
                 const message = JSON.parse(data.toString());
                 if (message.task === 'response' && events) {
+                    fs.writeFileSync(path.join(os.homedir(), '.pet', 'latest.html'), message.data)
                     events.emit(message.id, message.data);
                 }
             } catch (error) {

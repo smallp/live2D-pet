@@ -1,4 +1,4 @@
-async function openUrl(param: { url: string }) {
+async function openUrl(param: any) {
     const result = await (window as any).ipcRenderer.invoke('create-task', {
         task: 'featchUrl',
         data: param
@@ -17,6 +17,7 @@ export const webDef = [
                 type: "object",
                 properties: {
                     url: { type: "string" },
+                    wait: { type: "number", description: "等待网页加载完成的时间，单位秒，默认为0" },
                 },
                 required: ["url"],
             },
