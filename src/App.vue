@@ -2,7 +2,7 @@
 import { onMounted, ref } from 'vue'
 import type { AppConfig } from "../type.ts";
 import {OpenAI} from "openai";
-import { init as initTTS, tts } from "./tts";
+import { init as initTTS, tts, waiting } from "./tts";
 import { init as initLLM, chat as llmChat } from "./llm";
 import { webFunc } from "./tools/web";
 
@@ -57,6 +57,7 @@ onMounted(async () => {
         }).catch((uploadError) => {
           console.error('Renderer: Upload failed:', uploadError)
         })
+        await waiting()
       }
 
       mediaRecorder.value.start()

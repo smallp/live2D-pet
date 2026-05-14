@@ -5,6 +5,7 @@ let audioCtx: AudioContext | null = null;
 let pcmNode: AudioWorkletNode | null = null;
 let ttsClient: OpenAI | null = null;
 let modelConfig: TTSConfig | null = null;
+let waitingAudioCache: Float32Array | null = null;
 
 export async function init(config: TTSConfig) {
     if (audioCtx) return;
@@ -80,5 +81,80 @@ export async function tts(text: string) {
         }
     } catch (error) {
         console.error('TTS failed:', error);
+    }
+}
+
+export async function waiting() {
+    if (!ttsClient || !modelConfig || !pcmNode || !audioCtx) {
+        console.error("TTS not initialized");
+        return;
+    }
+
+    if (audioCtx.state === 'suspended') {
+        await audioCtx.resume();
+    }
+
+    if (waitingAudioCache) {
+        pcmNode.port.postMessage(waitingAudioCache);
+        return;
+    }
+
+    try {
+        const response = await ttsClient.audio.speech.create({
+            model: modelConfig.model,
+            voice: modelConfig.voice as any,
+            input: "好的主人，请稍等",
+            response_format: "pcm"
+        });
+
+        const reader = response.body?.getReader();
+        if (!reader) return;
+
+        let leftover: Uint8Array | null = null;
+        let chunks: Float32Array[] = [];
+        let totalLength = 0;
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            let combinedValue = value;
+            if (leftover) {
+                combinedValue = new Uint8Array(leftover.length + value.length);
+                combinedValue.set(leftover);
+                combinedValue.set(value, leftover.length);
+                leftover = null;
+            }
+
+            const remainder = combinedValue.length % 2;
+            let validData = combinedValue;
+            if (remainder !== 0) {
+                validData = combinedValue.slice(0, -remainder);
+                leftover = combinedValue.slice(-remainder);
+            }
+
+            if (validData.length === 0) continue;
+
+            const int16Array = new Int16Array(validData.buffer, validData.byteOffset, validData.byteLength / 2);
+            const float32Array = new Float32Array(int16Array.length);
+
+            for (let i = 0; i < int16Array.length; i++) {
+                float32Array[i] = int16Array[i] / 32768;
+            }
+
+            pcmNode.port.postMessage(float32Array);
+            chunks.push(float32Array);
+            totalLength += float32Array.length;
+        }
+
+        const cached = new Float32Array(totalLength);
+        let offset = 0;
+        for (const chunk of chunks) {
+            cached.set(chunk, offset);
+            offset += chunk.length;
+        }
+        waitingAudioCache = cached;
+    } catch (error) {
+        console.error('Waiting TTS failed:', error);
     }
 }

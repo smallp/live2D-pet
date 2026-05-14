@@ -1,6 +1,7 @@
-# Live2D Desktop Pet (Electron + Vue)
+# Desktop AI Assistant (Electron + Vue)
 
-这是一个基于 Electron、Vue 3 和 Vite 开发的桌面宠物应用，集成了大模型（LLM）、语音识别（STT）和语音合成（TTS）功能。
+这是一个基于 Electron、Vue 3 和 Vite 开发的桌面应用，集成了大模型（LLM）、语音识别（STT）和语音合成（TTS）功能。  
+之前想用 Live2d 实现一个数字人，但后面发现让数字人拟人难度很大，砍掉了。后面只会在 AI 上加功能，界面交互简略化。
 
 ## 功能特性
 

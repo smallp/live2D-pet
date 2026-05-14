@@ -5,7 +5,7 @@ import os from 'node:os'
 
 const logPath = path.join(os.homedir(), '.pet', 'log.log')
 
-export function setupHandlers(win: BrowserWindow | null) {
+export function setupHandlers() {
   // 初始化时删除旧日志
   if (fs.existsSync(logPath)) {
     try {
@@ -25,7 +25,8 @@ export function setupHandlers(win: BrowserWindow | null) {
   })
 
   ipcMain.handle('write-file', async (_, { path: filePath, content }) => {
-    if (!win) return { success: false, message: '窗口不存在' }
+    const win = BrowserWindow.getAllWindows()
+    if (win.length == 0) return { success: false, message: '窗口不存在' }
 
     // 强制将路径限制在用户根目录下
     let absolutePath: string
@@ -36,7 +37,7 @@ export function setupHandlers(win: BrowserWindow | null) {
       absolutePath = path.join(os.homedir(), relativePath)
     }
 
-    const { response } = await dialog.showMessageBox(win, {
+    const { response } = await dialog.showMessageBox(win[0], {
       type: 'question',
       buttons: ['确定', '取消'],
       defaultId: 0,

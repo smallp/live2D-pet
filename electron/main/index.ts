@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, ipcMain, Tray, nativeImage } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import { EventEmitter } from 'node:events'
@@ -38,7 +38,7 @@ if (!app.requestSingleInstanceLock()) {
   app.quit()
   process.exit(0)
 }
-
+let tray: Tray | null = null
 let win: BrowserWindow | null = null
 const preload = path.join(__dirname, '../preload/index.mjs')
 const indexHtml = path.join(RENDERER_DIST, 'index.html')
@@ -48,18 +48,12 @@ async function createWindow() {
     title: 'Main window',
     icon: path.join(process.env.VITE_PUBLIC, 'favicon.ico'),
     // frame: false,
-    transparent: true,
-    // alwaysOnTop: true,
-    // fullscreenable: false,
     // resizable: false,
     webPreferences: {
       preload,
       webSecurity: false,
     },
   })
-  // win.setIgnoreMouseEvents(true, { forward: true });
-  // win.setAlwaysOnTop(true, 'screen-saver');
-  win.setVisibleOnAllWorkspaces(true);
 
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL)
@@ -67,8 +61,19 @@ async function createWindow() {
   } else {
     win.loadFile(indexHtml)
   }
+  win.minimize()
 }
-
+const green = nativeImage.createFromPath(path.join(process.env.VITE_PUBLIC, 'green.png')).resize({ width: 32, height: 32 })
+const red = nativeImage.createFromPath(path.join(process.env.VITE_PUBLIC, 'red.png')).resize({ width: 32, height: 32 })
+green.setTemplateImage(false)
+red.setTemplateImage(false)
+function createTray() {
+  tray = new Tray(green)
+  tray.setToolTip('AI Assistant')
+}
+function changeTrayColor(isRed: boolean) {
+  tray?.setImage(isRed ? red : green)
+}
 // Global hotkey listening
 const F8_KEYCODE = 66
 let isF8Pressed = false
@@ -76,6 +81,7 @@ let isF8Pressed = false
 uIOhook.on('keydown', (event) => {
   if (event.keycode === F8_KEYCODE && !isF8Pressed) {
     isF8Pressed = true
+    changeTrayColor(true)
     win?.webContents.send('start-recording')
   }
 })
@@ -83,6 +89,7 @@ uIOhook.on('keydown', (event) => {
 uIOhook.on('keyup', (event) => {
   if (event.keycode === F8_KEYCODE && isF8Pressed) {
     isF8Pressed = false
+    changeTrayColor(false)
     win?.webContents.send('stop-recording')
   }
 })
@@ -92,7 +99,7 @@ app.whenReady().then(() => {
   if (validateConfig(config)) {
     setupConfigIPC(config)
     initWs(wsEvents)
-    setupHandlers(win)
+    setupHandlers()
 
     ipcMain.handle('create-task', async (_, taskData) => {
       const taskId = createTask(taskData)
@@ -104,7 +111,7 @@ app.whenReady().then(() => {
         })
       })
     })
-
+    createTray()
     createWindow()
     uIOhook.start()
   }
