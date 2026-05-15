@@ -1,6 +1,6 @@
 {
   "name": "electron-vue-vite",
-  "version": "28.1.0",
+  "version": "1.0.0",
   "main": "dist-electron/main/index.js",
   "description": "Really simple Electron + Vue + Vite boilerplate.",
   "author": "Small",
@@ -21,8 +21,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc --noEmit && vite build",
-    "preview": "vite preview"
+    "build": "vite build",
+    "postinstall": "electron-rebuild",
+    "package": "electron-builder"
   },
   "devDependencies": {
     "@types/ws": "^8.18.1",
@@ -37,6 +38,7 @@
     "vue-tsc": "^3.0.6"
   },
   "dependencies": {
+    "@electron/rebuild": "^4.0.4",
     "gray-matter": "^4.0.3",
     "openai": "^6.37.0",
     "uiohook-napi": "^1.5.5",

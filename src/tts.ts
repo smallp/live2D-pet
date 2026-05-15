@@ -19,7 +19,7 @@ export async function init(config: TTSConfig) {
 
     audioCtx = new window.AudioContext({ sampleRate: config.sampleRate });
 
-    await audioCtx.audioWorklet.addModule('/pcm-worker.js');
+    await audioCtx.audioWorklet.addModule('./pcm-worker.js');
 
     pcmNode = new AudioWorkletNode(audioCtx, 'pcm-player');
     pcmNode.connect(audioCtx.destination);
@@ -34,7 +34,6 @@ export async function tts(text: string) {
     if (audioCtx.state === 'suspended') {
         await audioCtx.resume();
     }
-    console.log(`tts:${text}`);
 
     try {
         const response = await ttsClient.audio.speech.create({

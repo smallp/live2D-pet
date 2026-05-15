@@ -4,7 +4,6 @@ import type { AppConfig } from "../type.ts";
 import {OpenAI} from "openai";
 import { init as initTTS, tts, waiting } from "./tts";
 import { init as initLLM, chat as llmChat } from "./llm";
-import { webFunc } from "./tools/web";
 
 const mediaRecorder = ref<MediaRecorder | null>(null)
 const audioChunks = ref<Blob[]>([])
@@ -13,8 +12,6 @@ let sttClient:OpenAI|null = null
 const modelConfig=ref<AppConfig|null>(null)
 
 const handleTestClick = async () => {
-  // const result = await webFunc.openUrl('https://www.zhihu.com/hot')
-  // console.log('webFunc.openUrl result:', result)
 }
 
 onMounted(async () => {
@@ -28,14 +25,13 @@ onMounted(async () => {
     })
     modelConfig.value = config
   }).catch((error) => {
-    console.error('Renderer: Failed to get config:', error)
+    window.ipcRenderer.invoke('log','Renderer: Failed to get config:'+error.toString())
   })
   try {
     var stream: MediaStream
     // Listen for start-recording from main process
     window.ipcRenderer.on('start-recording', async () => {
       isRecording.value = true
-      console.log('Renderer: Starting recording...')
       stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       audioChunks.value = []
       mediaRecorder.value = new MediaRecorder(stream)
@@ -55,7 +51,7 @@ onMounted(async () => {
         }).then((response) => {
           llmChat(response.text)
         }).catch((uploadError) => {
-          console.error('Renderer: Upload failed:', uploadError)
+          window.ipcRenderer.invoke('log','transcriptions failed:'+uploadError.toString())
         })
         await waiting()
       }
@@ -66,15 +62,14 @@ onMounted(async () => {
     // Listen for stop-recording from main process
     window.ipcRenderer.on('stop-recording', () => {
       isRecording.value = false
-      console.log('Renderer: Stopping recording...')
       if (mediaRecorder.value && mediaRecorder.value.state !== 'inactive') {
         mediaRecorder.value.stop()
         stream.getTracks().forEach(track => track.stop()) // 停止所有媒体轨道
       }
     })
 
-  } catch (error) {
-    console.error('Failed to access microphone:', error)
+  } catch (error:any) {
+    window.ipcRenderer.invoke('log','Renderer: Failed to access microphone:'+error.toString())
   }
 })
 

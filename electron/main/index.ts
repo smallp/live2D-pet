@@ -57,10 +57,10 @@ async function createWindow() {
 
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL)
-    win.webContents.openDevTools()
   } else {
     win.loadFile(indexHtml)
   }
+  win.webContents.openDevTools()
   win.minimize()
 }
 const green = nativeImage.createFromPath(path.join(process.env.VITE_PUBLIC, 'green.png')).resize({ width: 32, height: 32 })

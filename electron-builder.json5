@@ -1,9 +1,9 @@
 // @see https://www.electron.build/configuration/configuration
 {
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
-  "appId": "YourAppID",
+  "appId": "com.small.pet",
   "asar": true,
-  "productName": "YourAppName",
+  "productName": "AI Assistant",
   "directories": {
     "output": "release/${version}"
   },
@@ -12,10 +12,18 @@
     "dist-electron"
   ],
   "mac": {
+    "hardenedRuntime": true,
+    "gatekeeperAssess": false,
     "target": [
-      "dmg"
+      "zip"
     ],
-    "artifactName": "${productName}-Mac-${version}-Installer.${ext}"
+    "artifactName": "${productName}-Mac-${version}-Installer.${ext}",
+    "entitlements": "build/entitlements.mac.plist",
+    "entitlementsInherit": "build/entitlements.mac.plist",
+    "extendInfo": {
+      "NSMicrophoneUsageDescription": "需要麦克风权限用于录音/语音识别",
+      "NSAccessibilityUsageDescription": "需要辅助功能权限控制鼠标/键盘"
+    }
   },
   "win": {
     "target": [
